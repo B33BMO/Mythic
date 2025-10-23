@@ -2,10 +2,10 @@
   "name": "mythic-zulip",
   "version": "1.0.0",
   "description": "A beautiful Zulip client built with Next.js and Electron",
-  "main": "main.js",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && echo 'Next.js build complete'",
     "start": "next start",
     "electron": "electron .",
     "electron-dev": "ELECTRON_DEV=1 electron .",
@@ -13,7 +13,6 @@
     "dist": "npm run build && electron-builder",
     "dist-win": "npm run build && electron-builder --win",
     "dist-win64": "npm run build && electron-builder --win --x64",
-    "dist-all": "npm run build && electron-builder -wml",
     "build-installer": "npm run build && electron-builder --win --x64"
   },
   "keywords": [
@@ -51,21 +50,22 @@
       "output": "dist"
     },
     "files": [
-      "out/**/*",
-      "main.js",
-      "preload.js",
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
       "package.json",
-      "node_modules/**/*",
-      "!node_modules/.cache"
+      "!out/cache/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "public",
+        "to": "public",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        }
-      ],
-      "icon": "assets/icon.ico"
+      "target": "nsis",
+      "icon": "public/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -73,14 +73,6 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Mythic Zulip"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "assets/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "assets/icon.png"
     }
   }
 }

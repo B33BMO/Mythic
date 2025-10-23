@@ -1,0 +1,145 @@
+"use client";
+import { useState } from "react";
+
+interface LoginModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onLoginSuccess: () => void;
+}
+
+export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
+  const [email, setEmail] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [serverUrl, setServerUrl] = useState("https://zulip.cyburity.com");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Test the credentials by making a simple API call
+      const testResult = await fetch(`${serverUrl}/api/v1/users/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${btoa(`${email}:${apiKey}`)}`,
+        },
+      });
+
+      if (!testResult.ok) {
+        throw new Error('Invalid credentials or server URL');
+      }
+
+      // Save credentials to localStorage
+      const credentials = { email, apiKey, serverUrl };
+      localStorage.setItem('zulipCredentials', JSON.stringify(credentials));
+
+      // Try to sync credentials with Electron main process if available
+      try {
+        // This will work once we update the preload bridge
+        if (window.zulip && (window.zulip as any).setCredentials) {
+          await (window.zulip as any).setCredentials(credentials);
+          console.log('Credentials synced with main process');
+        }
+      } catch (bridgeError) {
+        console.log('Bridge not available for credential sync, continuing with localStorage');
+      }
+
+      onLoginSuccess();
+      onClose();
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+      <div className="glass w-full max-w-md p-6 rounded-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent)_700)] bg-clip-text text-transparent">
+  Login to Zulip
+</h2>
+
+          <button 
+            onClick={onClose}
+            className="p-1 rounded-md hover:bg-[color-mix(in_srgb,var(--text)_5%)] transition-colors text-[var(--text)]"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Zulip Server URL
+            </label>
+            <input
+              type="url"
+              value={serverUrl}
+              onChange={(e) => setServerUrl(e.target.value)}
+              placeholder="https://your-zulip-server.com"
+              className="w-full px-3 py-2 bg-[color-mix(in_srgb,var(--text)_5%)] border border-[color-mix(in_srgb,var(--text)_20%)] rounded-md focus:outline-none focus:border-[var(--accent)] transition-colors text-[var(--text)]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your-email@example.com"
+              className="w-full px-3 py-2 bg-[color-mix(in_srgb,var(--text)_5%)] border border-[color-mix(in_srgb,var(--text)_20%)] rounded-md focus:outline-none focus:border-[var(--accent)] transition-colors text-"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              API Key
+            </label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Your Zulip API key"
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:border-white text-white placeholder-white"
+              required
+            />
+            <p className="text-xs text-white mt-1">
+              Get your API key from Your account → Personal settings → API key
+            </p>
+          </div>
+
+          {error && (
+            <div className="p-2 bg-red-500/20 border border-red-500/30 rounded-md text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2 bg-[var(--accent)] text-black font-medium rounded-md hover:bg-[color-mix(in_srgb,var(--accent)_90%)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isLoading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <div className="mt-4 text-xs text-white">
+          <p>Your credentials are stored locally and only used to authenticate with Zulip.</p>
+        </div>
+      </div>
+    </div>
+  );
+}

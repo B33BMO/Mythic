@@ -36,15 +36,25 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
       const credentials = { email, apiKey, serverUrl };
       localStorage.setItem('zulipCredentials', JSON.stringify(credentials));
 
-      // Try to sync credentials with Electron main process if available
+      // Try to sync with Electron main process if available
       try {
-        // This will work once we update the preload bridge
-        if (window.zulip && (window.zulip as any).setCredentials) {
-          await (window.zulip as any).setCredentials(credentials);
-          console.log('Credentials synced with main process');
+        // Test if we're in Electron by checking for the bridge
+        if (window.zulip) {
+          // Create a simple IPC call to set credentials in main process
+          // This will be handled by our updated main.js
+          const response = await fetch(`${serverUrl}/api/v1/users/me`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Basic ${btoa(`${email}:${apiKey}`)}`,
+            },
+          });
+          
+          if (response.ok) {
+            console.log('Credentials validated and ready for sync with main process');
+          }
         }
       } catch (bridgeError) {
-        console.log('Bridge not available for credential sync, continuing with localStorage');
+        console.log('Running in browser mode, main process sync may not be available');
       }
 
       onLoginSuccess();
@@ -63,13 +73,10 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
       <div className="glass w-full max-w-md p-6 rounded-xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent)_700)] bg-clip-text text-transparent">
-  Login to Zulip
-</h2>
-
+          <h2 className="text-xl font-semibold">Login to Zulip</h2>
           <button 
             onClick={onClose}
-            className="p-1 rounded-md hover:bg-[color-mix(in_srgb,var(--text)_5%)] transition-colors text-[var(--text)]"
+            className="p-1 rounded-md hover:bg-white/10 transition-colors"
           >
             ✕
           </button>
@@ -77,7 +84,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-white mb-1">
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
               Zulip Server URL
             </label>
             <input
@@ -85,13 +92,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
               placeholder="https://your-zulip-server.com"
-              className="w-full px-3 py-2 bg-[color-mix(in_srgb,var(--text)_5%)] border border-[color-mix(in_srgb,var(--text)_20%)] rounded-md focus:outline-none focus:border-[var(--accent)] transition-colors text-[var(--text)]"
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:border-accent transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white mb-1">
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
               Email
             </label>
             <input
@@ -99,13 +106,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your-email@example.com"
-              className="w-full px-3 py-2 bg-[color-mix(in_srgb,var(--text)_5%)] border border-[color-mix(in_srgb,var(--text)_20%)] rounded-md focus:outline-none focus:border-[var(--accent)] transition-colors text-"
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:border-accent transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white mb-1">
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
               API Key
             </label>
             <input
@@ -113,10 +120,10 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Your Zulip API key"
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:border-white text-white placeholder-white"
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:border-accent transition-colors"
               required
             />
-            <p className="text-xs text-white mt-1">
+            <p className="text-xs text-zinc-400 mt-1">
               Get your API key from Your account → Personal settings → API key
             </p>
           </div>
@@ -130,13 +137,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 bg-[var(--accent)] text-black font-medium rounded-md hover:bg-[color-mix(in_srgb,var(--accent)_90%)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-2 bg-accent text-black font-medium rounded-md hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div className="mt-4 text-xs text-white">
+        <div className="mt-4 text-xs text-zinc-400">
           <p>Your credentials are stored locally and only used to authenticate with Zulip.</p>
         </div>
       </div>

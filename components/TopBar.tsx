@@ -94,8 +94,8 @@ export default function TopBar({
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 border border-white/10 dark-mode:bg-black/10 dark-mode:border-zinc-300/20">
               <img 
-                src="/logo.png" 
-                alt="Mythic Zulip"
+                src="./logo.png" 
+                alt="Mythic"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

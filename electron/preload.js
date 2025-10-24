@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld("zulip", {
   post: (path, body) => ipcRenderer.invoke("zulip:post", { path, body }),
   image: (url) => ipcRenderer.invoke("zulip:image", url),
   uploadFile: (fileName, buffer) => ipcRenderer.invoke("zulip:uploadFile", { fileName, buffer }),
+  // Add credential sync methods
+  setCredentials: (credentials) => ipcRenderer.invoke("set-zulip-credentials", credentials),
   getCredentials: () => ipcRenderer.invoke("get-zulip-credentials")
 });
 

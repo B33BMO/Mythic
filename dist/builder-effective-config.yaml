@@ -1,21 +1,20 @@
 directories:
   output: dist
   buildResources: build
-appId: com.cyburity.mythic-zulip
-productName: Mythic Zulip
-copyright: Copyright © 2024 Cyburity
+appId: com.bmo.mythic-zulip
+productName: Mythic
+copyright: Copyright © 2024 Brandon Bischoff
 files:
   - filter:
       - electron/**/*
-      - .next/**/*
+      - out/**/*
       - public/**/*
       - package.json
-      - '!out/cache/**/*'
 extraResources:
+  - from: out
+    to: out
   - from: public
     to: public
-    filter:
-      - '**/*'
 win:
   target: nsis
   icon: public/icon.ico
@@ -24,5 +23,5 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Mythic Zulip
+  shortcutName: Mythic
 electronVersion: 31.7.7

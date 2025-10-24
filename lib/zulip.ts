@@ -64,8 +64,36 @@ function getStoredCredentials() {
   return null;
 }
 
-// Update the authHeader function to use stored credentials
-function authHeader() {
+// Add this function to sync credentials with main process
+async function syncCredentialsWithMain() {
+  try {
+    const stored = getStoredCredentials();
+    if (stored && window.zulip) {
+      // @ts-ignore
+      await window.zulip.setCredentials(stored);
+    }
+  } catch (error) {
+    console.log('Credential sync failed:', error);
+  }
+}
+
+// Update the authHeader function to try main process first
+async function authHeader() {
+  try {
+    // Try to get credentials from main process first
+    if (window.zulip) {
+      // @ts-ignore
+      const mainCredentials = await window.zulip.getCredentials();
+      if (mainCredentials && mainCredentials.email && mainCredentials.apiKey) {
+        const token = btoa(`${mainCredentials.email}:${mainCredentials.apiKey}`);
+        return { Authorization: `Basic ${token}` };
+      }
+    }
+  } catch (error) {
+    console.log('Failed to get credentials from main process, using stored:', error);
+  }
+
+  // Fallback to stored credentials
   const stored = getStoredCredentials();
   const email = stored?.email || process.env.ZULIP_EMAIL;
   const key = stored?.apiKey || process.env.ZULIP_API_KEY;
@@ -78,8 +106,22 @@ function authHeader() {
   return { Authorization: `Basic ${token}` };
 }
 
-// Update the BASE URL to use stored server URL
-function getBaseUrl() {
+// Update the base URL function
+async function getBaseUrl() {
+  try {
+    // Try main process first
+    if (window.zulip) {
+      // @ts-ignore
+      const mainCredentials = await window.zulip.getCredentials();
+      if (mainCredentials?.serverUrl) {
+        return mainCredentials.serverUrl.replace(/\/+$/, "");
+      }
+    }
+  } catch (error) {
+    console.log('Failed to get server URL from main process:', error);
+  }
+
+  // Fallback to stored or env
   const stored = getStoredCredentials();
   return (stored?.serverUrl || process.env.ZULIP_REALM_URL || "").replace(/\/+$/, "");
 }
@@ -89,13 +131,14 @@ function getBaseUrl() {
  * ======================= */
 
 export async function listStreams(): Promise<Stream[]> {
-  // Returns all streams visible to the user (subscribed + public, subject to org settings)
+  // Sync credentials first
+  await syncCredentialsWithMain();
   const data = await zget("/streams");
   return (data.streams || []) as Stream[];
 }
 
 export async function listTopics(stream_id: number): Promise<Topic[]> {
-  // Topics (aka "subjects") for a given stream
+  await syncCredentialsWithMain();
   const data = await zget(`/users/me/${stream_id}/topics`);
   return (data.topics || []) as Topic[];
 }
@@ -105,16 +148,19 @@ export async function listTopics(stream_id: number): Promise<Topic[]> {
  * ======================= */
 
 export async function listUsers(): Promise<User[]> {
+  await syncCredentialsWithMain();
   const data = await zget("/users");
   return (data.members || []) as User[];
 }
 
 export async function realmPresence(): Promise<RealmPresence> {
+  await syncCredentialsWithMain();
   const data = await zget("/realm/presence");
   return data as RealmPresence;
 }
 
 export async function getSelf(): Promise<User & { user_id: number }> {
+  await syncCredentialsWithMain();
   const me = await zget("/users/me");
   return me;
 }
@@ -134,6 +180,7 @@ export async function fetchMessages(
   narrow: Narrow[],
   opts: FetchOpts = {}
 ): Promise<{ messages: Message[] }> {
+  await syncCredentialsWithMain();
   const anchor = opts.anchor ?? "newest";
   const num_before = String(opts.before ?? 50);
   const num_after = String(opts.after ?? 0);
@@ -153,6 +200,7 @@ export async function fetchMessages(
 
 // Backwards-compat alias used earlier
 export async function getMessages(narrow: Narrow[], anchor: "newest" | number = "newest") {
+  await syncCredentialsWithMain();
   return fetchMessages(narrow, { anchor, before: 50, after: 0, apply_markdown: true }).then(
     (r) => r.messages
   );
@@ -169,20 +217,19 @@ export async function sendMessage(params: {
   topic?: string;
   content: string;
 }) {
+  await syncCredentialsWithMain();
   const body: any = {
     type: params.type,
     content: params.content
   };
 
   if (params.type === "private") {
-    // For private messages, 'to' should be a JSON array string like '["email1@example.com", "email2@example.com"]'
     if (params.to) {
       body.to = params.to;
     } else {
       throw new Error("Missing recipient for private message");
     }
   } else {
-    // For stream messages
     if (params.stream) {
       body.stream = params.stream;
       body.topic = params.topic || "(no topic)";
@@ -199,8 +246,7 @@ export async function sendMessage(params: {
  * ======================= */
 
 export async function recentDMs(): Promise<Message[]> {
-  // Quick heuristic: pull latest private messages and group by sender.
-  // For richer “DM conversations”, Zulip also has /users/me/pm_conversations (server-dependent).
+  await syncCredentialsWithMain();
   const { messages } = await fetchMessages([{ operator: "is", operand: "private" }], {
     anchor: "newest",
     before: 50,
@@ -220,6 +266,7 @@ export async function recentDMs(): Promise<Message[]> {
  * ======================= */
 
 export async function searchMessages(query: string, opts: FetchOpts = {}) {
+  await syncCredentialsWithMain();
   const { messages } = await fetchMessages([{ operator: "search", operand: query }], {
     anchor: opts.anchor ?? "newest",
     before: opts.before ?? 50,
@@ -234,6 +281,7 @@ export async function searchMessages(query: string, opts: FetchOpts = {}) {
  * ======================= */
 
 export async function uploadFile(file: File): Promise<{ uri: string; url: string; filename: string }> {
+  await syncCredentialsWithMain();
   try {
     const arrayBuffer = await file.arrayBuffer();
     
@@ -264,6 +312,7 @@ export async function getUnreadCounts(): Promise<{
   streams: Map<number, number>;
   dms: Map<string, number>;
 }> {
+  await syncCredentialsWithMain();
   try {
     // @ts-ignore
     const result = await window.zulip.get('/messages?num_before=0&num_after=0&anchor=newest');
@@ -271,15 +320,12 @@ export async function getUnreadCounts(): Promise<{
     const streams = new Map<number, number>();
     const dms = new Map<string, number>();
     
-    // Parse unread counts from the response
-    // This is a simplified version - you might need to adjust based on Zulip's actual API response
     if (result.messages) {
       result.messages.forEach((msg: any) => {
         if (msg.type === 'stream') {
           const current = streams.get(msg.stream_id) || 0;
           streams.set(msg.stream_id, current + 1);
         } else if (msg.type === 'private') {
-          // For DMs, use the sender's email
           const current = dms.get(msg.sender_email) || 0;
           dms.set(msg.sender_email, current + 1);
         }
@@ -289,7 +335,6 @@ export async function getUnreadCounts(): Promise<{
     return { streams, dms };
   } catch (error) {
     console.error('Failed to get unread counts:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return { streams: new Map(), dms: new Map() };
   }
 }
@@ -299,11 +344,13 @@ export async function getUnreadCounts(): Promise<{
  * ======================= */
 
 export async function getUser(user_id: number): Promise<User> {
+  await syncCredentialsWithMain();
   const data = await zget(`/users/${user_id}`);
   return data.user as User;
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
+  await syncCredentialsWithMain();
   try {
     const users = await listUsers();
     return users.find(u => u.email === email) || null;

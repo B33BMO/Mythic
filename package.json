@@ -1,11 +1,11 @@
 {
-  "name": "mythic-zulip",
+  "name": "mythic",
   "version": "1.0.0",
   "description": "A beautiful Zulip client built with Next.js and Electron",
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && echo 'Next.js build complete'",
+    "build": "next build",
     "start": "next start",
     "electron": "electron .",
     "electron-dev": "ELECTRON_DEV=1 electron .",
@@ -21,7 +21,7 @@
     "chat",
     "messaging"
   ],
-  "author": "Your Name",
+  "author": "Brandpn Bischoff",
   "license": "MIT",
   "dependencies": {
     "react": "^18.2.0",
@@ -43,24 +43,26 @@
     "typescript": "^5.0.0"
   },
   "build": {
-    "appId": "com.cyburity.mythic-zulip",
-    "productName": "Mythic Zulip",
-    "copyright": "Copyright © 2024 Cyburity",
+    "appId": "com.bmo.mythic-zulip",
+    "productName": "Mythic",
+    "copyright": "Copyright © 2024 Brandon Bischoff",
     "directories": {
       "output": "dist"
     },
     "files": [
       "electron/**/*",
-      ".next/**/*",
+      "out/**/*",
       "public/**/*",
-      "package.json",
-      "!out/cache/**/*"
+      "package.json"
     ],
     "extraResources": [
       {
-        "from": "public",
-        "to": "public",
-        "filter": ["**/*"]
+        "from": "out",
+        "to": "out"
+      },
+      {
+        "from": "public", 
+        "to": "public"
       }
     ],
     "win": {
@@ -72,7 +74,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Mythic Zulip"
+      "shortcutName": "Mythic"
     }
   }
 }

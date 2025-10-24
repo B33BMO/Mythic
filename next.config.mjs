@@ -4,8 +4,9 @@ const nextConfig = {
   distDir: 'out',
   trailingSlash: true,
   images: {
-    unoptimized: true
-  }
+    unoptimized: true  // This is crucial for static export
+  },
+  assetPrefix: './'
 }
 
 export default nextConfig

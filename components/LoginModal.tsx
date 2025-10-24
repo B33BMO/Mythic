@@ -134,10 +134,10 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
             </div>
           )}
 
-          <button
+           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 bg-accent text-black font-medium rounded-md hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-2 bg-[var(--accent)] text-black font-medium rounded-md hover:bg-[color-mix(in_srgb,var(--accent)_90%)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Logging in..." : "Login"}
           </button>

@@ -155,7 +155,7 @@ export default function TopBar({
             <div className="border-2 border-white/20 group-hover:border-white/30 transition-colors rounded-full dark-mode:border-zinc-300/20 dark-mode:group-hover:border-zinc-400/30">
               <EnhancedAvatar 
                 email={me?.email} 
-                name={me?.full_name || me?.email || "User"} 
+                name={"User"} 
                 size={40}
               />
             </div>

@@ -18,10 +18,10 @@
   "keywords": [
     "zulip",
     "electron",
-    "chat",
+    "chat", 
     "messaging"
   ],
-  "author": "Brandpn Bischoff",
+  "author": "Brandon Bischoff",
   "license": "MIT",
   "dependencies": {
     "react": "^18.2.0",

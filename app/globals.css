@@ -6,10 +6,11 @@
 
 /* Base variables that don't change */
 :root {
-  --panel: rgba(0, 0, 0, 0.035);
-  --panel-strong: rgba(0, 0, 0, 0.08);
-  --text: #2b2b2b;
-  --muted: #2e2e2e;
+  --panel: rgba(255, 255, 255, 0.035);
+  --panel-strong: rgba(255, 255, 255, 0.08);
+  --text: #e6e7ee;
+  --muted: #828282;
+--accent: #00dc82;
 }
 
 :root.dark-mode {
@@ -73,7 +74,7 @@
 /* Time-based gradients - DARK MODE (MUST COME AFTER LIGHT MODE DEFINITIONS) */
 :root.dark-mode.time-morning {
   --gradient-primary: radial-gradient(1000px 700px at 30% -10%, rgba(255, 200, 100, 0.15) 0%, rgba(11, 14, 20, 0) 60%);
-  --gradient-secondary: linear-gradient(180deg, #1a1625 0%, #2d1b69 100%);
+  --gradient-secondary: linear-gradient(180deg, #1a1625 0%, #694f1b 100%);
   --gradient-accent: radial-gradient(800px 500px at 20% 30%, rgba(255, 159, 28, 0.25) 0%, transparent 70%);
 }
 

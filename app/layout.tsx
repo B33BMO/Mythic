@@ -1,9 +1,13 @@
 import "./globals.css";
 import UserPreloader from "@/components/UserPreloader";
+import VertexNetwork from "@/components/VertexNetwork";
 
 const isDev = typeof process !== "undefined" && process.env.NEXT_PUBLIC_ELECTRON_DEV === "1";
 
-export const metadata = { title: "Mythic Zulip", description: "Next + Electron Zulip client" };
+export const metadata = { 
+  title: "Mythic", 
+  description: "Next + Electron Zulip client" 
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body className="h-screen w-screen overflow-hidden">
+        <VertexNetwork />
         <UserPreloader />
         {children}
       </body>

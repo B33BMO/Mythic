@@ -49,14 +49,24 @@ async function createWindow() {
     console.log('App path:', appPath);
     
     // Try different possible locations where the build might be
-    const possiblePaths = [
-      path.join(appPath, 'out', 'index.html'),
-      path.join(appPath, 'out', 'app', 'index.html'),
-      path.join(process.resourcesPath, 'app', 'out', 'index.html'),
-      path.join(process.resourcesPath, 'app', 'out', 'app', 'index.html'),
-      path.join(__dirname, '..', 'out', 'index.html'),
-      path.join(__dirname, '..', 'out', 'app', 'index.html')
-    ];
+// In the createWindow() function, replace the possiblePaths array with:
+
+const possiblePaths = [
+  path.join(appPath, '.next', 'index.html'),
+  path.join(appPath, '.next', 'app', 'index.html'),
+  path.join(process.resourcesPath, 'app', '.next', 'index.html'),
+  path.join(process.resourcesPath, 'app', '.next', 'app', 'index.html'),
+  path.join(__dirname, '..', '.next', 'index.html'),
+  path.join(__dirname, '..', '.next', 'app', 'index.html'),
+  // Also keep the out paths as fallback
+  path.join(appPath, 'out', 'index.html'),
+  path.join(appPath, 'out', 'app', 'index.html'),
+  path.join(process.resourcesPath, 'app', 'out', 'index.html'),
+  path.join(process.resourcesPath, 'app', 'out', 'app', 'index.html'),
+  path.join(__dirname, '..', 'out', 'index.html'),
+  path.join(__dirname, '..', 'out', 'app', 'index.html')
+];
+
     
     let loaded = false;
     
